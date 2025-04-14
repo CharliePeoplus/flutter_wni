@@ -1,6 +1,6 @@
 name: flutter_wni
 description: Flutter WNInterface Plugin
-version: 0.2.1
+version: 0.2.2
 repository: https://github.com/progdesigner/flutter-wni
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
