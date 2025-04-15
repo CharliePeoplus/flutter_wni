@@ -18,7 +18,7 @@ class WNInterfacePayload {
 
   WNInterfacePayload({required this.command, required this.data});
 
-  factory WNInterfacePayload.fromMessage(JavascriptMessage message) {
+  factory WNInterfacePayload.fromMessage(JavaScriptMessage message) {
     var map = jsonDecode(message.message);
 
     if (map.containsKey("version") && map.containsKey("payload")) {
@@ -58,6 +58,13 @@ class WNInterface {
     setupAndroidSafeArea();
   }
 
+  // JavascriptChannel 등록
+  Future<void> initialize() async {
+    await initJavaScriptChannel((payload) {
+      execute(payload);
+    });
+  }
+
   void registerMethods( Map<String, Function> methods ) {
     _methods = methods;
   }
@@ -65,13 +72,13 @@ class WNInterface {
   void setupAndroidSafeArea() {
     final EdgeInsets safeArea = MediaQuery.of(_context).padding;
 
-    _controller.runJavascript(
+    _controller.runJavaScript(
         "document.documentElement.style.setProperty('--android-safe-area-inset-top', '${safeArea.top.toString()}px');");
-    _controller.runJavascript(
+    _controller.runJavaScript(
         "document.documentElement.style.setProperty('--android-safe-area-inset-left', '${safeArea.left.toString()}px');");
-    _controller.runJavascript(
+    _controller.runJavaScript(
         "document.documentElement.style.setProperty('--android-safe-area-inset-right', '${safeArea.right.toString()}px');");
-    _controller.runJavascript(
+    _controller.runJavaScript(
         "document.documentElement.style.setProperty('--android-safe-area-inset-bottom', '${safeArea.bottom.toString()}px');");
   }
 
@@ -79,7 +86,7 @@ class WNInterface {
     final String script =
         scriptFunction + "('" + jsonString.replaceAll("'", "\\'") + "')";
     //print("script : ${script}");
-    _controller.runJavascript(script);
+    _controller.runJavaScript(script);
   }
   
   void execute(WNInterfacePayload payload) {
@@ -102,13 +109,24 @@ class WNInterface {
     return "VirtualInterface";
   }
 
-  static JavascriptChannel getJavascriptChannel(Function (WNInterfacePayload payload) handler) {
-    return JavascriptChannel(
-        name: getInterfaceName(),
-        onMessageReceived: (JavascriptMessage message) {
-          handler(WNInterfacePayload.fromMessage(message));
-        });
+  Future<void> initJavaScriptChannel(Function(WNInterfacePayload payload) handler) async {
+    await _controller.addJavaScriptChannel(
+      getInterfaceName(),
+      onMessageReceived: (JavaScriptMessage message) {
+        handler(WNInterfacePayload.fromMessage(message));
+      },
+    );
   }
+
+  // Webview 4.x 버전 아후에는 JavascriptChannel을 직접 사용할 수 없음 
+  // 
+  // static JavascriptChannel getJavascriptChannel(Function (WNInterfacePayload payload) handler) {
+  //   return JavascriptChannel(
+  //       name: getInterfaceName(),
+  //       onMessageReceived: (JavaScriptMessage message) {
+  //         handler(WNInterfacePayload.fromMessage(message));
+  //       });
+  // }
 
   static bool get isEmulator {
     if (Platform.isIOS) {
